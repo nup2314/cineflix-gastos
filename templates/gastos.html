@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block titulo %}CineFlix - Registro de gastos{% endblock %}
+
+{% block contenido %}
+<div class="tarjetas">
+    <div class="tarjeta-dato">
+        <span>Gastos del mes</span>
+        <strong>${{ '{:,.2f}'.format(total_mes) }}</strong>
+    </div>
+    <div class="tarjeta-dato">
+        <span>Gastos totales</span>
+        <strong>${{ '{:,.2f}'.format(total) }}</strong>
+    </div>
+</div>
+
+<h2>Nuevo gasto</h2>
+<form method="POST" action="{{ url_for('gastos') }}" class="grid-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label for="concepto">Concepto:</label>
+        <input id="concepto" type="text" name="concepto" maxlength="150"
+               value="{{ form_data.get('concepto', '') }}" required>
+    </div>
+    <div>
+        <label for="categoria">Categoría:</label>
+        <select id="categoria" name="categoria" required>
+            <option value="">Selecciona categoría</option>
+            {% for cat in categorias %}
+                <option value="{{ cat }}"
+                    {% if form_data.get('categoria') == cat %}selected{% endif %}>
+                    {{ cat }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="monto">Monto (MXN):</label>
+        <input id="monto" type="number" name="monto" step="0.01" min="0.01"
+               value="{{ form_data.get('monto', '') }}" required>
+    </div>
+    <div>
+        <label for="fecha">Fecha del gasto:</label>
+        <input id="fecha" type="date" name="fecha"
+               value="{{ form_data.get('fecha', hoy) }}" required>
+    </div>
+    <div class="completo">
+        <label for="notas">Notas (opcional):</label>
+        <textarea id="notas" name="notas" rows="2" maxlength="500">{{ form_data.get('notas', '') }}</textarea>
+    </div>
+    <div class="completo">
+        <button type="submit">Registrar gasto</button>
+    </div>
+</form>
+
+<h2>Gastos registrados</h2>
+{% if gastos %}
+    <div class="resumen">
+        {% for r in resumen %}
+            <span class="etiqueta">{{ r.categoria }}:
+                <b>${{ '{:,.2f}'.format(r.total) }}</b></span>
+        {% endfor %}
+    </div>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Categoría</th>
+                    <th>Notas</th>
+                    <th>Monto</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in gastos %}
+                <tr>
+                    <td>{{ g.id }}</td>
+                    <td>{{ g.fecha }}</td>
+                    <td>{{ g.concepto }}</td>
+                    <td>{{ g.categoria }}</td>
+                    <td>{{ g.notas or '—' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(g.monto) }}</td>
+                    <td>
+                        <form method="POST"
+                              action="{{ url_for('eliminar_gasto', gasto_id=g.id) }}"
+                              onsubmit="return confirm('¿Eliminar este gasto?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="boton-eliminar" type="submit">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5">TOTAL</td>
+                    <td class="monto">${{ '{:,.2f}'.format(total) }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+{% else %}
+    <p class="vacio">Todavía no hay gastos registrados.</p>
+{% endif %}
+{% endblock %}
